@@ -1,0 +1,30 @@
+version: "3.0"
+services:
+
+  web:
+    build: "web"
+    ports:
+      - "5000:5000"
+
+  # selenium:
+  #   image: selenium/standalone-chrome-debug
+  #   ports:
+  #     - "5900:5900"
+  #     - "4444:4444"
+  #   depends_on:
+  #     - "web"
+
+  selenium:
+    image: yukinying/chrome-headless-browser-selenium
+    cap_add:
+      - SYS_ADMIN
+    shm_size: 1024m
+    depends_on:
+      - "web"
+
+  tests:
+    build: "tests"
+    depends_on:
+      - "selenium"
+    volumes:
+      - "./tests/features:/app/features"
