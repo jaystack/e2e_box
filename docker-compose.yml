@@ -3,8 +3,6 @@ services:
 
   web:
     build: "web"
-    ports:
-      - "5000:5000"
 
   # selenium:
   #   image: selenium/standalone-chrome-debug
