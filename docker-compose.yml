@@ -4,11 +4,6 @@ services:
   web:
     build: "web"
 
-  # selenium:
-  #   image: selenium/standalone-chrome-debug
-  #   depends_on:
-  #     - "web"
-
   selenium:
     image: yukinying/chrome-headless-browser-selenium
     cap_add:
@@ -21,5 +16,3 @@ services:
     build: "tests"
     depends_on:
       - "selenium"
-    volumes:
-      - "./tests/features:/app/features"

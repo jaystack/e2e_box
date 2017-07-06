@@ -8,10 +8,10 @@ logging.getLogger('promise.ControlFlow').setLevel(logging.Level.ALL);
 promise.USE_PROMISE_MANAGER = false;
 
 function CustomWorld() {
-  this.driver = new seleniumWebdriver.Builder()
+  console.log('world is created');
+  this.builder = new seleniumWebdriver.Builder()
     .forBrowser('chrome')
     .usingServer('http://selenium:4444/wd/hub')
-    .build();
 }
 
 defineSupportCode(({setWorldConstructor}) => {

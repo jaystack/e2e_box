@@ -1,0 +1,27 @@
+version: "3.0"
+services:
+  # open
+  web:
+    environment:
+      - PORT=5000
+    command: ["start"]
+    ports:
+      - "5000:5000"
+    volumes:
+      - "./web/src:/app/src"
+
+  selenium:
+    image: selenium/standalone-chrome-debug
+    ports:
+      - "4444:4444"
+      - "5900:5900"
+
+  tests:
+    volumes:
+      - "./tests/features:/app/features"
+
+  tests-fast:
+    build: "tests"
+    volumes:
+      - "./tests/features:/app/features"
+    command: ["run", "fast"]
