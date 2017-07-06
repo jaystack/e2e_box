@@ -4,9 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "wait-on": "wait-on",
     "curl": "curl",
-    "test": "npm run wait-on http-get://selenium:4444/wd/hub/ && npm run wait-on http-get://web:5000/ && cucumberjs"
+    "wait-web": "wait-on http-get://web:5000/",
+    "wait-selenium": "wait-on http-get://selenium:4444/wd/hub/",
+    "test": "npm run wait-web && npm run wait-selenium && cucumberjs",
+    "fast": "cucumberjs"
   },
   "keywords": [],
   "author": "",
