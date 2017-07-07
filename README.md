@@ -53,7 +53,7 @@ Instead of relying on shared, permanent services, like a corp wide Selenium serv
 
 This all will be encapsulated in a docker-compose project, which serves as a sandbox, that wraps each test environments. This also lets the components to always know about each other without extra configuration effort. For example the test application can always access Selenium as `http://selenium` while the Selenium service can always access the website as `http://web`.
 
-![img](https://raw.githubusercontent.com/jaystack/e2e_box/master/content/images.001.png)
+![img](https://raw.githubusercontent.com/jaystack/e2e_box/master/content/images.002.png)
 
 
 
