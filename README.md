@@ -57,6 +57,14 @@ A fully built version of the test system can be found at https://github.com/jays
 ### The test application
 Source: https://github.com/jaystack/e2e_box/tree/master/tests
 
+```gherkin
+Feature: Website main page
+
+Scenario: Visiting the website
+ Given a visitor navigates to the site
+ Then they will see a greeting message saying "Welcome to React"
+```
+
 CUCUMBER INTRO COMES HERE
 
 ### The docker-compose setup
