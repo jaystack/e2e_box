@@ -43,19 +43,29 @@ Docker and docker-compose provides our sandbox that can spin up in any environme
 Using the lowest level driver (okay, almost) provides a better understanding of the overall test system - and is `one less api and documentation` to know about.
 
 #### gherkin style tests with Cucumber.js
-It could be really anything, like mocha. For me however, working against plain English sentences, created potentially by someone non developer, helps creating test code that is more agnostic to the implementation.
+It could be really anything, like mocha. Done in BDD tyle or not - the gherkin syntax, and keeping test specificaions separate from implementation code has some nice benefits. Non developers being able to participate in their creation, and data driven tests are just two it.
 
 ## The big picture
+<table>
+<tr>
+<td>
+Instead of relying on shared, permanent services, like a shared Selenium server in test env, or a development webserver, we will have all our system components captured as docker images, and started as dedicated containers - that exist just for the lifetime of a single test run. Each time we execute the tests, our required services will start afresh in perfect new condition - giving the highest chance for a predictable execution result. Also, instead of running the E2E test code using the webserver process, which is a common practice, we will run it in its dedicated worker process and container.
 
-Instead of relying on shared, permanent services, like a corp wide Selenium server, or a development webserver, we will have all our system components captured as docker images, started as dedicated containers - that exist just for the lifetime of a single test run. Each time we do a test run our required services will start afresh in perfect new condition - giving the highest chance for a predictable execution result. Also, instead of running the E2E test code using the webserver process, which is a common practice, we will run it in its dedicated worker process and container.
-
-This all will be encapsulated in a docker-compose project, which serves as a sandbox, that wraps each test environments. This also lets the different service components to always know about each other without extra configuration effort. For example the test application can always access Selenium as `http://selenium` while the Selenium service can always access the website as `http://web`.
+That's a lot of containers to deal with, you might say, more so, if you'll add some more tiers like REST api service and a mongodb - for a more realistic application. The good news is: you'll don't need to deal with those containers. Docker-compose to our help: all of the above will be encapsulated in a docker-compose project - so we can use simple docker-compose commands to start/run/stop the whole test system. Docker-compose default networking also serves as a sandbox, that wraps the set of containers created for each test runs. This lets the different service components to always know about each other without extra configuration effort. For example the test application can always access Selenium as `http://selenium` while the Selenium service can always access the website as `http://web`  no matter where we are running the tests.
+</td>
+<td>
+![my img](https://raw.githubusercontent.com/jaystack/e2e_box/master/content/compose.png)
+</td>
+</tr>
+</table>
 
 ## The implementation
 
 A fully built version of the test system can be found at https://github.com/jaystack/e2e_box.
+
 ### The test application
 Source: https://github.com/jaystack/e2e_box/tree/master/tests
+
 
 ```gherkin
 Feature: Website main page
@@ -99,7 +109,10 @@ Later on the docker-compose utility will use this file to build an image for us.
 ####
 
 
+#### Read stuff
 
+http://docs.behat.org/en/v2.5/guides/1.gherkin.html#backgrounds
+http://docs.behat.org/en/v2.5/guides/1.gherkin.html
 
 
 
