@@ -1,0 +1,26 @@
+{
+  "name": "e2e",
+  "version": "1.0.0",
+  "description": "E2E test environment",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "docker-compose -f docker-compose.yml run tests",
+    "down": "docker-compose down",
+    "start-local": "docker-compose up -d selenium",
+    "test-local": "docker-compose run tests run fast"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jaystack/e2e_box.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jaystack/e2e_box/issues"
+  },
+  "homepage": "https://github.com/jaystack/e2e_box#readme"
+}
