@@ -46,18 +46,18 @@ Using the lowest level driver (okay, almost) provides a better understanding of 
 It could be really anything, like mocha. Done in BDD tyle or not - the gherkin syntax, and keeping test specificaions separate from implementation code has some nice benefits. Non developers being able to participate in their creation, and data driven tests are just two it.
 
 ## The big picture
-<table>
-<tr>
-<td>
+
 Instead of relying on shared, permanent services, like a shared Selenium server in test env, or a development webserver, we will have all our system components captured as docker images, and started as dedicated containers - that exist just for the lifetime of a single test run. Each time we execute the tests, our required services will start afresh in perfect new condition - giving the highest chance for a predictable execution result. Also, instead of running the E2E test code using the webserver process, which is a common practice, we will run it in its dedicated worker process and container.
 
+<table>
+<tr>
+<td width="50%" valign="top">
 That's a lot of containers to deal with, you might say, more so, if you'll add some more tiers like REST api service and a mongodb - for a more realistic application. The good news is: you'll don't need to deal with those containers. Docker-compose to our help: all of the above will be encapsulated in a docker-compose project - so we can use simple docker-compose commands to start/run/stop the whole test system. Docker-compose default networking also serves as a sandbox, that wraps the set of containers created for each test runs. This lets the different service components to always know about each other without extra configuration effort. For example the test application can always access Selenium as `http://selenium` while the Selenium service can always access the website as `http://web`  no matter where we are running the tests.
 </td>
 <td>
-![my img](https://raw.githubusercontent.com/jaystack/e2e_box/master/content/compose.png)
+<img width="100%" src="https://raw.githubusercontent.com/jaystack/e2e_box/master/content/compose.png" />
 </td>
-</tr>
-</table>
+</tr></table>
 
 ## The implementation
 
