@@ -15,6 +15,12 @@ const getBody = body => ({
   body: JSON.stringify(body)
 });
 
+const createPostMethod = apiUrl => async (path, body) =>
+  fetch(`${apiUrl}${path}`, getBody(body)).then(response => response.json());
+
+const createGetMethod = apiUrl => async (path) =>
+  fetch(`${apiUrl}${path}`).then(response => response.json())
+
 class World {
   constructor({ parameters }) {
     const {
@@ -26,6 +32,14 @@ class World {
     Object.assign(this, { seleniumUrl, apiUrl, webUrl });
   }
 
+  get apiClient() {
+    const { apiUrl } = this;
+    return {
+      post: createPostMethod(apiUrl),
+      get: createGetMethod(apiUrl)
+    }
+  }
+
   async createSeleniumDriver() {
     const driver = await new seleniumWebdriver.Builder()
       .forBrowser('chrome')
@@ -34,16 +48,6 @@ class World {
     this.driver = driver;
     this.cleanUpTasks.push(async () => await driver.quit());
     return driver;
-  }
-
-  getApiClient() {
-    const post = async (path, body) =>
-      fetch(`${this.apiUrl}${path}`, getBody(body)).then(response => response.json());
-
-    const get = async (path) =>
-      fetch(`${this.apiUrl}${path}`).then(response => response.json())
-
-    return { post, get }
   }
 
   async cleanUp() {

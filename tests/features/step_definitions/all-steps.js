@@ -72,13 +72,13 @@ defineSupportCode(function ({ Given, When, Then }) {
     /* api related */
     Given(/the product database contains the following items/, async function(table) {
         const products = table.hashes();
-        const { post } = this.getApiClient()
+        const { post } = this.apiClient;
         await post(`/products`, products);
     });
 
     When(/I issue a GET request to "(.*)"/, async function(apiPath) {
-        const api = this.getApiClient();
-        const data = await api.get(apiPath);
+        const { get } = this.apiClient;
+        const data = await get(apiPath);
         this.ax = JSON.stringify(data, null, 2);
     });
 
