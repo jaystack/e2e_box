@@ -55,7 +55,7 @@ Instead of relying on shared, permanent services, like a shared Selenium server 
 That's a lot of containers to deal with, you might say, more so, if you'll add some more tiers like REST api service and a mongodb - for a more realistic application. The good news is: you'll don't need to deal with those containers. Docker-compose to our help: all of the above will be encapsulated in a docker-compose project - so we can use simple docker-compose commands to start/run/stop the whole test system. Docker-compose default networking also serves as a sandbox, that wraps the set of containers created for each test runs. This lets the different service components to always know about each other without extra configuration effort. For example the test application can always access Selenium as `http://selenium` while the Selenium service can always access the website as `http://web`  no matter where we are running the tests.
 </td>
 <td>
-<img width="100%" src="https://raw.githubusercontent.com/jaystack/e2e_box/master/content/compose.png" />
+<img width="100%" src="https://raw.githubusercontent.com/jaystack/e2e_box/master/content/compose2.png" />
 </td>
 </tr></table>
 
