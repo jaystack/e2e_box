@@ -1,6 +1,5 @@
 Feature: Product list
 
-
 Background:
 
   Given a website to accept visitors

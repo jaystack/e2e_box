@@ -1,4 +1,4 @@
-const {defineSupportCode} = require('cucumber');
+const { defineSupportCode } = require('cucumber');
 const seleniumWebdriver = require('selenium-webdriver');
 const { promise } = seleniumWebdriver;
 const fetch = require('node-fetch');
@@ -59,4 +59,4 @@ class World {
 
 defineSupportCode(({setWorldConstructor}) => {
   setWorldConstructor(World);
-})
+});

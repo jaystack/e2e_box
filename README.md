@@ -4,14 +4,15 @@
 
 Pull the e2e_box repository
 
-### Running in local DEV mode
-#### Run tests
+## Running in local DEV mode
+
+Execute tests found in e2e_box/tests/features
 ```
 e2e
 ❯ docker-compose run tests
 ```
 
-#### Start system without running tests
+Start system without running tests
 ```
 e2e
 ❯ docker-compose up -d web
@@ -26,7 +27,7 @@ e2e
 - live edits and fast test run for test code using Cucumber.js
 - zero complication with selenium setup
 
-### Running in CI mode
+## Running in CI mode
 ```
 docker-compose -f docker-compose.yml run tests && \
  docker-compose -f docker-compose.yml down
@@ -55,7 +56,7 @@ Docker and docker-compose provides our sandbox that can spin up in any environme
 Using the lowest level driver (okay, almost) provides a better understanding of the overall test system - and is `one less api and documentation` to know about.
 
 #### gherkin style tests with Cucumber.js
-It could be really anything, like mocha. Done in BDD tyle or not - the gherkin syntax, and keeping test specificaions separate from implementation code has some nice benefits. Non developers being able to participate in their creation, and data driven tests are just two it.
+It could be really anything, like mocha - in our original case tests were created `by the bussiness` and they already love the gherkin syntax. Done in BDD tyle or not - the gherkin syntax, and keeping test specificaions separate from implementation code has some nice benefits. Non developers being able to participate in their creation, and data driven tests are just two it.
 
 ## The big picture
 
@@ -112,18 +113,92 @@ defineSupportCode(function ({ Given, When, Then }) {
         assert.equal(content, expected);
     });
 ```
-Notice the extensive use of `this`. Cucumber tests are stateful: Scenarios when executed get a dedicated World instance that operates as their state. Scenario steps are free to alter the state and since the order of the steps
+Notice the extensive use of `this`. Cucumber tests are stateful: Scenarios, when executed, get a dedicated World instance that operates as their state.
 
+**a basic World class**
+```javascript
+const { defineSupportCode } = require('cucumber');
 
-The gherkin/cucumber.js based tests are composed of two types files: test specifications file with a distinctive `.feature` file extension, and test implementation code written in one of the supported languages - in our case these are `.js` files.
+class World {
+  constructor({ parameters }) {
 
-```gherkin
-Feature: Website main page
+  }
+}
 
-Scenario: Visiting the website
- Given a visitor navigates to the site
- Then they will see a greeting message saying "Welcome to React"
+defineSupportCode(({setWorldConstructor} ) => {
+  setWorldConstructor(World);
+});
 ```
+
+Scenario test code is free to alter the `world instance` during the test run, and since the order of the steps matter we can leverage this for some cool/unpure/side effecting ways to implement our tests.
+
+The `World class` is also the place to create shared code or lower level APIs - that step definitions later can simply access from `this`. Wrapping the Selenium Webdriver connect/disconnect logic, or a backend mongodb connection are some examples. The `constructor` of the `World class` receives the startup parameters (if any) in javascript object.
+
+**tests/features/support/World.js**
+```javascript
+class World {
+  constructor({ parameters }) {
+    const {
+      seleniumUrl = 'http://selenium:4444/wd/hub',
+      apiUrl = 'http://api:5001',
+      webUrl = 'http://web:5000'
+    } = parameters;
+    this.cleanUpTasks = [];
+    Object.assign(this, { seleniumUrl, apiUrl, webUrl });
+  }
+
+  get apiClient() {
+    const { apiUrl } = this;
+    return {
+      post: createPostMethod(apiUrl),
+      get: createGetMethod(apiUrl)
+    }
+  }
+
+  async createSeleniumDriver() {
+    const driver = await new seleniumWebdriver.Builder()
+      .forBrowser('chrome')
+      .usingServer(this.seleniumUrl)
+      .build();
+    this.driver = driver;
+    this.cleanUpTasks.push(async () => await driver.quit());
+    return driver;
+  }
+
+  /* {  some code is omitted for brevity } */
+}
+```
+The above world implementation takes the service addresses as parameter - and if no parameter is passed, it falls back on safe default values. Also it provides the `createSeleniumDriver` and the `apiClient` world instance members for test steps to easily access test infrastructure.
+
+The `gherking syntax` lets us embed data into the test specification so that test code can be data driven. Here is a lengthy example:
+
+**tests/features/cart.feature**
+```gherkin
+Feature: Product list
+
+Background:
+  Given a website to accept visitors
+  Given the product database contains the following items
+  |name          |price  |
+  |Picalilly     |4      |
+  |Ribeye steak  |8      |
+  |Sirloin steak |6      |
+  |Rocket salad  |2      |
+
+Scenario: Adding items to the cart multiple times
+  Given I navigate to the product page
+  Then I see "4" items in the product list
+  When I put the "Picalilly" product in my cart
+  Then I see "1" items in my cart
+   And the total cart value is "£ 4"
+  When I put the "Picalilly" product in my cart
+  Then I see "2" items in my cart
+   And the total cart value is "£ 8"
+  When I put the "Sirloin steak" product in my cart
+  Then I see "3" items in my cart
+   And the total cart value is "£ 14"
+```
+
 
 CUCUMBER INTRO COMES HERE
 
