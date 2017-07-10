@@ -19,8 +19,8 @@ const locateByCss = async (driver, css, timeout = 3000) => {
 const waitForByCss = locateByCss;
 
 defineSupportCode(function ({ Given, When, Then }) {
-    /* welcome features */
     Given(/a website to accept visitors/, async function() {
+        // this holds the actual World instance
         this.driver = await this.createSeleniumDriver();
     })
 

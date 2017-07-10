@@ -1,16 +1,28 @@
 # E2E testing with cucumber, selenium-webdriver and docker-compose
 
-## Fast info for the typing hungry
+## Quick info if you don't want to read much
 
-### Running in DEV mode
+Pull the e2e_box repository
+
+### Running in local DEV mode
+#### Run tests
 ```
-docker-compose run --rm tests
+e2e
+❯ docker-compose run tests
+```
+
+#### Start system without running tests
+```
+e2e
+❯ docker-compose up -d web
 ```
 
 *Features*
-- access website under test on [localhost:5000](http://localhost:5000/)
+- access website being tested on [localhost:5000](http://localhost:5000/)
+- access website backend REST API on [localhost:5001](http://localhost:5001/)
 - access Selenium vnc viewerport on [localhost:5900](http://localhost:5900/)
-- live edits and live-reload for website code written in React
+- live edits and live-reload for website: open `e2e_box/web/src`
+- live edits and live-reload for api: open `e2e_box/api/src`
 - live edits and fast test run for test code using Cucumber.js
 - zero complication with selenium setup
 
@@ -53,6 +65,7 @@ Instead of relying on shared, permanent services, like a shared Selenium server 
 
 That's a lot of containers to deal with, you might say, more so, if you'll add some more tiers like REST api service and a mongodb - for a more realistic application. The good news is: you'll don't need to deal with those containers. Docker-compose to our help: all of the above will be encapsulated in a <b>docker-compose project</b> - so we can use simple docker-compose commands to start/run/stop the whole test system, or just parts. The <b>default docker network</b> provided by docker-compose also serves as a sandbox, that wraps the set of containers created for each test runs. This lets the different service components to always know about each other without extra configuration effort. For example the test application can always access Selenium as `http://selenium` while the Selenium service can always access the website as `http://web`  no matter where we are running the tests.
 
+
 ## The implementation
 
 A fully built version of the test system can be found at https://github.com/jaystack/e2e_box.
@@ -60,6 +73,49 @@ A fully built version of the test system can be found at https://github.com/jays
 ### The test application
 Source: https://github.com/jaystack/e2e_box/tree/master/tests
 
+This document isn't aiming to be a detailed material on the `gherkin syntax`, or the `cucumber.js` library, or the means to unleash your BDD super idenity. It just tries to show some interesting basics so that you'll wanna dig deeper on your own.
+
+Cucumber.js has a unique way for providing the otherwise usual functionality of a test framework: its functional mainly with a pinch of classes and instances. Sounds doggy but its actually a very nice balance.
+
+Tests are specified through a list of features definitions, which are stand alone text files with one or more scenarios in them that are plain English sentences with some basic semantic rules in them. They must have a `.feature` file extension.
+**tests/features/welcome.feture**
+```gherkin
+Feature: Website main page
+
+Scenario: Visitors are welcomed
+ Given a website to accept visitors
+ When  I open the main page
+ Then I see a welcome message saying "Welcome to React"
+```
+
+`Given`, `When`, `Then` are the guys you probably know as Arrange, Act, Assert from your previous experiences. You can have multiple of them and you can change them anyplace to `And` for better readability.
+
+Test implementation is given as a set of match handlers - against the specification text.
+**tests/features/step_definitions/steps.js**
+```javascript
+const { defineSupportCode } = require('cucumber');
+
+defineSupportCode(function ({ Given, When, Then }) {
+    Given(/a website to accept visitors/, async function() {
+        // the `this` holds the actual World instance - read below
+        this.driver = await this.createSeleniumDriver();
+    })
+
+    When(/I open the main page/, async function() {
+        await this.driver.get(this.webUrl);
+    })
+
+    Then(/I see a welcome message saying "(.*)"/, async function(expected) {
+        const driver = this.driver;
+        const welcomeBox = await locateByCss(driver, '[data-welcome]');
+        const content = await welcomeBox.getText();
+        assert.equal(content, expected);
+    });
+```
+Notice the extensive use of `this`. Cucumber tests are stateful: Scenarios when executed get a dedicated World instance that operates as their state. Scenario steps are free to alter the state and since the order of the steps
+
+
+The gherkin/cucumber.js based tests are composed of two types files: test specifications file with a distinctive `.feature` file extension, and test implementation code written in one of the supported languages - in our case these are `.js` files.
 
 ```gherkin
 Feature: Website main page
@@ -76,10 +132,10 @@ CUCUMBER INTRO COMES HERE
 DOCKER-COMPOSE FILE AND USAGE DETAILED
 
 
-### The test subject: a React web application
+### The test subject #1: a create-react-app application
 Source: https://github.com/jaystack/e2e_box/tree/master/web
 
-Obviously it is  irrelevant what technlogy was used to create the solution we are about to test. What matters is that we need to create a containerized version of it that when started up will eventually launch our web service. It is a particularly simple process for a nodejs/React app - all it takes is a Docker file that we place in the website root. A very simple version of it, that expects a `build` and a `service` package script to do the appliction specific steps would look like this:
+It is  irrelevant what technlogy is was to create the solution, as long as one can build a docker container to host and run it. It is a particularly simple process for a nodejs/React app (but not too complicated for Java or .NET either) - all it takes is a Dockerfile, that we place in the website root for simplicity sake. A very simple version of it, that expects a `build` and a `service` package script to do the appliction specific steps would look like this:
 
 **web/Dockerfile**
 ```Dockerfile
@@ -95,9 +151,10 @@ ENTRYPOINT ["npm"]
 CMD ["run","service"]
 
 ```
-What happens is that the content of the web folder gets copied into the docker container, then node modules are installed and the application is built. Finally - the script that launches the website is set as startup commend for the container.
+Note that the package*.json files are added to the image first and source files only after `RUN npm i`. This way installing packages will fulfilled from local docker cache the next time we rebuild this image - assuming the package files haven't changed.
 
-Its important to note that after we `ADD package\*.json` files, the next step is having the node modules installed with `RUN npm i`, and just _after_ it should we copy the whole application source with `ADD . .`. This way if we just change the source (but not the package definition files) the _docker image cache_ will speed up the  build process significantly.
+Also note that we build the web application inside the container with `npm run build`. This way the whole build process is also encapsulated.
+
 
 Later on the docker-compose utility will use this file to build an image for us.
 ####

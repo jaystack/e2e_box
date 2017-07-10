@@ -1,9 +1,7 @@
 Feature: Website main page
 
-Background:
- Given a website to accept visitors
-
 Scenario: Visitors are welcomed
+ Given a website to accept visitors
  When  I open the main page
  Then I see a welcome message saying "Welcome to React"
 
