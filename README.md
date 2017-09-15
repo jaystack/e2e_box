@@ -1,21 +1,33 @@
 # E2E testing with cucumber, selenium-webdriver and docker-compose
 
-## Fast info for the typing hungry
-See detailed content below.
+## Quick info if you don't want to read much
 
-### Running in DEV mode
+Pull the e2e_box repository
+
+## Running in local DEV mode
+
+Execute tests found in e2e_box/tests/features
 ```
-docker-compose run --rm tests
+e2e
+❯ docker-compose run tests
+```
+
+Start system without running tests
+```
+e2e
+❯ docker-compose up -d web
 ```
 
 *Features*
-- access website under test on [localhost:5000](http://localhost:5000/)
+- access website being tested on [localhost:5000](http://localhost:5000/)
+- access website backend REST API on [localhost:5001](http://localhost:5001/)
 - access Selenium vnc viewerport on [localhost:5900](http://localhost:5900/)
-- live edits and live-reload for website code written in React
+- live edits and live-reload for website: open `e2e_box/web/src`
+- live edits and live-reload for api: open `e2e_box/api/src`
 - live edits and fast test run for test code using Cucumber.js
-- zero fuss with selenium setup
+- zero complication with selenium setup
 
-### Running in CI mode
+## Running in CI mode
 ```
 docker-compose -f docker-compose.yml run tests && \
  docker-compose -f docker-compose.yml down
@@ -23,11 +35,11 @@ docker-compose -f docker-compose.yml run tests && \
 
 # E2E testing with cucumber, selenium and docker-compose
 
-Browser based E2E tests are awesome. You just create a couple of lines of test code and you can cover several thousand lines of application logic and tons of css rule
+Browser based E2E tests are awesome. You just create a couple of lines of test code and you can cover several thousand lines of application logic and tons of css rule.
 
-Browser based E2E tests also suck. They are usually felt fragile, complicated to operate and develop, non-deterministic with a lot of false positive runs, and prone to break from a simple change in the markup.
+Browser based E2E tests are also a pain. They are usually felt fragile, complicated to develop and maintain, sometimes non-deterministic with a lot of false positive runs, and prone to break from a simple change in the markup.
 
-In the below I just collected what was learned from a couple of recent experiments - and share some tips on building an E2E environment that is less prone to the above issues and is more likely to hold on the longer run - and also fun to use.
+Is all lost then? I hope not, so I collected what was learned from some recent experience - and share some tips on building an E2E environment that is less prone to the above issues and is more likely to hold on the longer run - and also fun to use.
 
 ## The tools used in this demo
 
@@ -37,26 +49,196 @@ Selenium (webdriver) is like the [Khumbu Icefall](https://en.wikipedia.org/wiki/
 #### ~~Selenium WebDriver with Chrome Headless~~
 Sorry guys, it's just not there yet - but very very close. Read  more at the end.
 
-#### docker-compose
-Docker-compose provides our sandbox  that can run in any environments that supports docker - letting us to run the very same E2E test system in local development time or during the CI/CD pipeline.
-
+#### docker and docker-compose
+Docker and docker-compose provides our sandbox that can spin up in any environments that has docker installed - letting us run the very same E2E test system in local development time or during the CI/CD pipeline.
 
 #### selenium-webdriver library
 Using the lowest level driver (okay, almost) provides a better understanding of the overall test system - and is `one less api and documentation` to know about.
 
 #### gherkin style tests with Cucumber.js
-It could be really anything, like mocha. For me however, working against plain English sentences, created potentially by someone non developer, helps creating test code that is more agnostic to the implementation.
+It could be really anything, like mocha - in our original case tests were created `by the bussiness` and they already love the gherkin syntax. Done in BDD tyle or not - the gherkin syntax, and keeping test specificaions separate from implementation code has some nice benefits. Non developers being able to participate in their creation, and data driven tests are just two it.
 
 ## The big picture
 
-Instead of relying on shared, permanent services, like a corp wide Selenium server, or a development webserver, we will have all our system components captured as docker images, started as dedicated containers - that exists just for the lifetime of a single test run. Each time we do a test run our required services will start afresh in perfect new condition - giving the highest chance for a predictable execution result. Also, instead of running the E2E test code using the webserver process, which is a common practice, we will run it in its dedicated worker process and container.
+Instead of relying on shared, permanent services, like a shared Selenium server in test env, or a development webserver, we will have all our system components captured as docker images, and started as dedicated containers - that exist just for the lifetime of a single test run. Each time we execute the tests, our required services will start afresh in perfect new condition - giving the highest chance for a predictable execution result. Also, instead of running the E2E test code using the webserver process, which is a common practice, we will run it in its dedicated worker process and container.
 
-This all will be encapsulated in a docker-compose project, which serves as a sandbox, that wraps each test environments. This also lets the components to always know about each other without extra configuration effort. For example the test application can always access Selenium as `http://selenium` while the Selenium service can always access the website as `http://web`.
+<img width="50%" align="right" src="https://raw.githubusercontent.com/jaystack/e2e_box/master/content/compose2.png" />|
 
-![img](https://raw.githubusercontent.com/jaystack/e2e_box/master/content/images.002.png)
+That's a lot of containers to deal with, you might say, more so, if you'll add some more tiers like REST api service and a mongodb - for a more realistic application. The good news is: you'll don't need to deal with those containers. Docker-compose to our help: all of the above will be encapsulated in a <b>docker-compose project</b> - so we can use simple docker-compose commands to start/run/stop the whole test system, or just parts. The <b>default docker network</b> provided by docker-compose also serves as a sandbox, that wraps the set of containers created for each test runs. This lets the different service components to always know about each other without extra configuration effort. For example the test application can always access Selenium as `http://selenium` while the Selenium service can always access the website as `http://web`  no matter where we are running the tests.
 
 
+## The implementation
 
+A fully built version of the test system can be found at https://github.com/jaystack/e2e_box.
+
+### The test application
+Source: https://github.com/jaystack/e2e_box/tree/master/tests
+
+This document isn't aiming to be a detailed material on the `gherkin syntax`, or the `cucumber.js` library, or the means to unleash your BDD super idenity. It just tries to show some interesting basics so that you'll wanna dig deeper on your own.
+
+Cucumber.js has a unique way for providing the otherwise usual functionality of a test framework: its functional mainly with a pinch of classes and instances. Sounds doggy but its actually a very nice balance.
+
+Tests are specified through a list of features definitions, which are stand alone text files with one or more scenarios in them that are plain English sentences with some basic semantic rules in them. They must have a `.feature` file extension.
+**tests/features/welcome.feture**
+```gherkin
+Feature: Website main page
+
+Scenario: Visitors are welcomed
+ Given a website to accept visitors
+ When  I open the main page
+ Then I see a welcome message saying "Welcome to React"
+```
+
+`Given`, `When`, `Then` are the guys you probably know as Arrange, Act, Assert from your previous experiences. You can have multiple of them and you can change them anyplace to `And` for better readability.
+
+Test implementation is given as a set of match handlers - against the specification text.
+**tests/features/step_definitions/steps.js**
+```javascript
+const { defineSupportCode } = require('cucumber');
+
+defineSupportCode(function ({ Given, When, Then }) {
+    Given(/a website to accept visitors/, async function() {
+        // the `this` holds the actual World instance - read below
+        this.driver = await this.createSeleniumDriver();
+    })
+
+    When(/I open the main page/, async function() {
+        await this.driver.get(this.webUrl);
+    })
+
+    Then(/I see a welcome message saying "(.*)"/, async function(expected) {
+        const driver = this.driver;
+        const welcomeBox = await locateByCss(driver, '[data-welcome]');
+        const content = await welcomeBox.getText();
+        assert.equal(content, expected);
+    });
+```
+Notice the extensive use of `this`. Cucumber tests are stateful: Scenarios, when executed, get a dedicated World instance that operates as their state.
+
+**a basic World class**
+```javascript
+const { defineSupportCode } = require('cucumber');
+
+class World {
+  constructor({ parameters }) {
+
+  }
+}
+
+defineSupportCode(({setWorldConstructor} ) => {
+  setWorldConstructor(World);
+});
+```
+
+Scenario test code is free to alter the `world instance` during the test run, and since the order of the steps matter we can leverage this for some cool/unpure/side effecting ways to implement our tests.
+
+The `World class` is also the place to create shared code or lower level APIs - that step definitions later can simply access from `this`. Wrapping the Selenium Webdriver connect/disconnect logic, or a backend mongodb connection are some examples. The `constructor` of the `World class` receives the startup parameters (if any) in javascript object.
+
+**tests/features/support/World.js**
+```javascript
+class World {
+  constructor({ parameters }) {
+    const {
+      seleniumUrl = 'http://selenium:4444/wd/hub',
+      apiUrl = 'http://api:5001',
+      webUrl = 'http://web:5000'
+    } = parameters;
+    this.cleanUpTasks = [];
+    Object.assign(this, { seleniumUrl, apiUrl, webUrl });
+  }
+
+  get apiClient() {
+    const { apiUrl } = this;
+    return {
+      post: createPostMethod(apiUrl),
+      get: createGetMethod(apiUrl)
+    }
+  }
+
+  async createSeleniumDriver() {
+    const driver = await new seleniumWebdriver.Builder()
+      .forBrowser('chrome')
+      .usingServer(this.seleniumUrl)
+      .build();
+    this.driver = driver;
+    this.cleanUpTasks.push(async () => await driver.quit());
+    return driver;
+  }
+
+  /* {  some code is omitted for brevity } */
+}
+```
+The above world implementation takes the service addresses as parameter - and if no parameter is passed, it falls back on safe default values. Also it provides the `createSeleniumDriver` and the `apiClient` world instance members for test steps to easily access test infrastructure.
+
+The `gherking syntax` lets us embed data into the test specification so that test code can be data driven. Here is a lengthy example:
+
+**tests/features/cart.feature**
+```gherkin
+Feature: Product list
+
+Background:
+  Given a website to accept visitors
+  Given the product database contains the following items
+  |name          |price  |
+  |Picalilly     |4      |
+  |Ribeye steak  |8      |
+  |Sirloin steak |6      |
+  |Rocket salad  |2      |
+
+Scenario: Adding items to the cart multiple times
+  Given I navigate to the product page
+  Then I see "4" items in the product list
+  When I put the "Picalilly" product in my cart
+  Then I see "1" items in my cart
+   And the total cart value is "£ 4"
+  When I put the "Picalilly" product in my cart
+  Then I see "2" items in my cart
+   And the total cart value is "£ 8"
+  When I put the "Sirloin steak" product in my cart
+  Then I see "3" items in my cart
+   And the total cart value is "£ 14"
+```
+
+
+CUCUMBER INTRO COMES HERE
+
+### The docker-compose setup
+
+DOCKER-COMPOSE FILE AND USAGE DETAILED
+
+
+### The test subject #1: a create-react-app application
+Source: https://github.com/jaystack/e2e_box/tree/master/web
+
+It is  irrelevant what technlogy is was to create the solution, as long as one can build a docker container to host and run it. It is a particularly simple process for a nodejs/React app (but not too complicated for Java or .NET either) - all it takes is a Dockerfile, that we place in the website root for simplicity sake. A very simple version of it, that expects a `build` and a `service` package script to do the appliction specific steps would look like this:
+
+**web/Dockerfile**
+```Dockerfile
+FROM node:6
+WORKDIR /app
+ADD package-lock.json .
+ADD package.json .
+RUN npm i
+ADD . .
+RUN npm run build
+
+ENTRYPOINT ["npm"]
+CMD ["run","service"]
+
+```
+Note that the package*.json files are added to the image first and source files only after `RUN npm i`. This way installing packages will fulfilled from local docker cache the next time we rebuild this image - assuming the package files haven't changed.
+
+Also note that we build the web application inside the container with `npm run build`. This way the whole build process is also encapsulated.
+
+
+Later on the docker-compose utility will use this file to build an image for us.
+####
+
+
+#### Read stuff
+
+http://docs.behat.org/en/v2.5/guides/1.gherkin.html#backgrounds
+http://docs.behat.org/en/v2.5/guides/1.gherkin.html
 
 
 

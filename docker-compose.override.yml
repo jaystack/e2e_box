@@ -1,6 +1,13 @@
 version: "3.0"
 services:
-  # open
+
+  api:
+    ports:
+    - "5001:5001"
+    volumes:
+      - "./api/src:/app/src"
+    command: ["run","start-watch"]
+
   web:
     environment:
       - PORT=5000
@@ -19,9 +26,3 @@ services:
   tests:
     volumes:
       - "./tests/features:/app/features"
-
-  tests-fast:
-    build: "tests"
-    volumes:
-      - "./tests/features:/app/features"
-    command: ["run", "fast"]

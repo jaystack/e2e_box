@@ -8,12 +8,16 @@
     "wait-web": "wait-on http-get://web:5000/",
     "wait-selenium": "wait-on http-get://selenium:4444/wd/hub/",
     "test": "npm run wait-web && npm run wait-selenium && cucumberjs",
-    "fast": "cucumberjs"
+    "fast": "cucumberjs",
+    "debug-host": "tail -f /dev/null",
+    "debug": "node --inspect=0.0.0.0:5858 node_modules/.bin/cucumber.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "bluebird": "^3.5.0",
+    "node-fetch": "^1.7.1",
     "selenium-webdriver": "^3.4.0"
   },
   "devDependencies": {

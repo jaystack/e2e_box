@@ -1,11 +1,16 @@
 version: "3.0"
 services:
 
+  api:
+    build: "api"
+
   web:
     build: "web"
+    depends_on:
+      - "api"
 
   selenium:
-    image: selenium/standalone-chrome-debug
+    image: selenium/standalone-chrome
     depends_on:
       - "web"
 

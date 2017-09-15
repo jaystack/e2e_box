@@ -2,11 +2,12 @@ const {defineSupportCode} = require('cucumber');
 
 defineSupportCode(function ({ After, Before }) {
   Before(async function() {
-    this.driver = await this.builder.build();
+    // this executes before each scenario
   })
 
   After(async function() {
-    await this.driver.quit();
+    // this executes after each scenario
+    await this.cleanUp();
   });
 
 });

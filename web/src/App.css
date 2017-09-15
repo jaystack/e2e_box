@@ -24,6 +24,19 @@ button, input {
   margin-right: 15px;
 }
 
+.product-item span, .total-item span {
+  display: inline-block;
+  width: 200px;
+}
+
+.product-item span:nth-of-type(2), .total-item span:nth-of-type(2) {
+  text-align: right;
+}
+
+.product-item button {
+  margin-left:20px;
+}
+
 @keyframes App-logo-spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }

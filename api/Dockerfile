@@ -4,13 +4,11 @@ WORKDIR /app
 
 ADD package-lock.json .
 ADD package.json .
-ADD yarn.lock .
-RUN yarn install
+RUN npm i
 ADD . .
-RUN npm run build
 
 ENTRYPOINT ["npm"]
-CMD ["run","service"]
+CMD ["run","start"]
 
 
 
